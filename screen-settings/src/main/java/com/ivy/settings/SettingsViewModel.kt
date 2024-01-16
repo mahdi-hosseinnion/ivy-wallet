@@ -14,6 +14,7 @@ import com.ivy.data.db.dao.write.WriteSettingsDao
 import com.ivy.domain.ComposeViewModel
 import com.ivy.domain.RootScreen
 import com.ivy.frp.monad.Res
+import com.ivy.google_drive.GoogleDriveBackupRepository
 import com.ivy.legacy.IvyWalletCtx
 import com.ivy.legacy.LogoutLogic
 import com.ivy.legacy.data.SharedPrefs
@@ -52,6 +53,7 @@ class SettingsViewModel @Inject constructor(
     private val settingsAct: SettingsAct,
     private val updateSettingsAct: UpdateSettingsAct,
     private val settingsWriter: WriteSettingsDao,
+    private val googleDriveBackupRepository: GoogleDriveBackupRepository
 ) : ComposeViewModel<SettingsState, SettingsEvent>() {
 
     private val currencyCode = mutableStateOf("")
