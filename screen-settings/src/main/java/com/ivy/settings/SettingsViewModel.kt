@@ -66,6 +66,8 @@ class SettingsViewModel @Inject constructor(
     private val treatTransfersAsIncomeExpense = mutableStateOf(false)
     private val startDateOfMonth = mutableIntStateOf(1)
     private val progressState = mutableStateOf(false)
+    private val googleDriveBackupState =
+        mutableStateOf<GoogleDriveBackupState>(GoogleDriveBackupState.CheckingUserAuthState)
 
     @Composable
     override fun uiState(): SettingsState {
@@ -83,7 +85,8 @@ class SettingsViewModel @Inject constructor(
             treatTransfersAsIncomeExpense = getTreatTransfersAsIncomeExpense(),
             startDateOfMonth = getStartDateOfMonth(),
             progressState = getProgressState(),
-            hideIncome = getHideIncome()
+            hideIncome = getHideIncome(),
+            googleDriveBackupState = getGoogleDriveBackupState()
         )
     }
 
@@ -97,6 +100,7 @@ class SettingsViewModel @Inject constructor(
         initializeHideIncome()
         initializeTransfersAsIncomeExpense()
         initializeStartDateOfMonth()
+        initializeGoogleDriveAuthState()
     }
 
     private suspend fun initializeCurrency() {
@@ -146,6 +150,19 @@ class SettingsViewModel @Inject constructor(
 
     private suspend fun initializeStartDateOfMonth() {
         startDateOfMonth.intValue = startDayOfMonthAct(Unit)
+    }
+
+    private fun initializeGoogleDriveAuthState() {
+        val authState = googleDriveBackupRepository.getUserAuthenticationState()
+        val driveState = authState.fold(
+            { intent ->
+                GoogleDriveBackupState.SignedOut(signedUpIntent = intent)
+            },
+            { account ->
+                GoogleDriveBackupState.SignedUp(email = account.email)
+            }
+        )
+        googleDriveBackupState.value = driveState
     }
 
     @Composable
@@ -198,6 +215,11 @@ class SettingsViewModel @Inject constructor(
         return progressState.value
     }
 
+    @Composable
+    private fun getGoogleDriveBackupState(): GoogleDriveBackupState {
+        return googleDriveBackupState.value
+    }
+
     override fun onEvent(event: SettingsEvent) {
         when (event) {
             is SettingsEvent.SetCurrency -> setCurrency(event.newCurrency)
@@ -223,6 +245,9 @@ class SettingsViewModel @Inject constructor(
 
             SettingsEvent.DeleteCloudUserData -> deleteCloudUserData()
             SettingsEvent.DeleteAllUserData -> deleteAllUserData()
+            SettingsEvent.StartGoogleDriveBackup -> startGoogleDriveBackup()
+            SettingsEvent.CreateGoogleDriveBackup -> createGoogleDriveBackup()
+            SettingsEvent.OnStartSigningUserUpForGoogleDrive -> onStartSigningUserUpForGoogleDrive()
         }
     }
 
@@ -398,4 +423,24 @@ class SettingsViewModel @Inject constructor(
             logoutLogic.logout()
         }
     }
+
+    private fun startGoogleDriveBackup() {
+        viewModelScope.launch {
+            initializeGoogleDriveAuthState()
+            googleDriveBackupRepository.backupNow()
+        }
+    }
+
+    private fun createGoogleDriveBackup() {
+        viewModelScope.launch {
+            googleDriveBackupRepository.backupNow()
+        }
+    }
+
+    private fun onStartSigningUserUpForGoogleDrive() {
+        googleDriveBackupState.value = GoogleDriveBackupState.SigningUp
+
+    }
+
+
 }

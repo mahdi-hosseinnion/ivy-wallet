@@ -1,5 +1,6 @@
 package com.ivy.settings
 
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -99,6 +101,7 @@ fun BoxWithConstraintsScope.SettingsScreen() {
         treatTransfersAsIncomeExpense = uiState.treatTransfersAsIncomeExpense,
         nameLocalAccount = uiState.name,
         startDateOfMonth = uiState.startDateOfMonth.toInt(),
+        googleDriveBackupState = uiState.googleDriveBackupState,
         onSetCurrency = {
             viewModel.onEvent(SettingsEvent.SetCurrency(it))
         },
@@ -135,6 +138,15 @@ fun BoxWithConstraintsScope.SettingsScreen() {
         onDeleteCloudUserData = {
             viewModel.onEvent(SettingsEvent.DeleteCloudUserData)
         },
+        onUserSignedUpForGoogleDrive = {
+            viewModel.onEvent(SettingsEvent.StartGoogleDriveBackup)
+        },
+        createGoogleDriveBackup = {
+            viewModel.onEvent(SettingsEvent.CreateGoogleDriveBackup)
+        },
+        onUserStartSigningUpForGoogleDrive = {
+            viewModel.onEvent(SettingsEvent.OnStartSigningUserUpForGoogleDrive)
+        }
     )
 }
 
@@ -147,6 +159,7 @@ private fun BoxWithConstraintsScope.UI(
     lockApp: Boolean,
     nameLocalAccount: String?,
     onSetCurrency: (String) -> Unit,
+    googleDriveBackupState: GoogleDriveBackupState,
     startDateOfMonth: Int = 1,
     showNotifications: Boolean = true,
     hideCurrentBalance: Boolean = false,
@@ -164,6 +177,9 @@ private fun BoxWithConstraintsScope.UI(
     onSetStartDateOfMonth: (Int) -> Unit = {},
     onDeleteAllUserData: () -> Unit = {},
     onDeleteCloudUserData: () -> Unit = {},
+    onUserSignedUpForGoogleDrive: () -> Unit = {},
+    createGoogleDriveBackup: () -> Unit = {},
+    onUserStartSigningUpForGoogleDrive: () -> Unit = {},
 
 ) {
     var currencyModalVisible by remember { mutableStateOf(false) }
@@ -203,7 +219,22 @@ private fun BoxWithConstraintsScope.UI(
             }
             // onboarding toolbar include paddingBottom 16.dp
         }
-
+        item {
+            val context = LocalContext.current
+            GoogleDriveBackup(
+                state = googleDriveBackupState,
+                onUserSignedUp = onUserSignedUpForGoogleDrive,
+                onStartSigningUserIn = onUserStartSigningUpForGoogleDrive,
+                createBackupNow = createGoogleDriveBackup,
+                onUserWasUnableToSignup = {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.google_error_try_again),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+            )
+        }
         item {
             Spacer(Modifier.height(8.dp))
 
@@ -1156,6 +1187,7 @@ private fun Preview() {
             lockApp = false,
             currencyCode = "BGN",
             onSetCurrency = {},
+            googleDriveBackupState = GoogleDriveBackupState.SignedUp(null)
         )
     }
 }

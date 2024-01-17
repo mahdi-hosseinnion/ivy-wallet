@@ -99,6 +99,8 @@ firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics", ve
 google-services-drive = {module = "com.google.apis:google-api-services-drive", version = "v3-rev136-1.25.0"}
 google-http-gson = {module = "com.google.http-client:google-http-client-gson", version = "1.26.0"}
 google-http-android = {module = "com.google.api-client:google-api-client-android", version = "1.26.0"}
+listenablefutureExcluded = { module = "com.google.guava:listenablefuture", version = "9999.0-empty-to-avoid-conflict-with-guava" }
+
 firebase-crashlytics-gradle-plugin = { module = "com.google.firebase:firebase-crashlytics-gradle", version = "2.9.9" }
 
 # AndroidX
