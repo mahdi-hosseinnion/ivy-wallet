@@ -441,4 +441,6 @@
     <string name="experimental_settings">Experimental Settings</string>
     <string name="wallet_balance">Wallet balance</string>
     <string name="total_exclusive">Total (exclusive): %1$s %2$s</string>
+    <string name="google_drive_backup">Google Drive Backup</string>
+    <string name="enabled">Enabled</string>
 </resources>

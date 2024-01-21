@@ -438,7 +438,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun onStartSigningUserUpForGoogleDrive() {
-        googleDriveBackupState.value = GoogleDriveBackupState.SigningUp
+        googleDriveBackupState.value = GoogleDriveBackupState.TryingToSignUp
 
     }
 

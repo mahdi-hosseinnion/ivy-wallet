@@ -44,11 +44,13 @@ import com.ivy.design.l0_system.UI
 import com.ivy.design.l0_system.style
 import com.ivy.design.l1_buildingBlocks.IconScale
 import com.ivy.design.l1_buildingBlocks.IvyIconScaled
+import com.ivy.google_drive.auth.createGoogleSignInActivityLauncher
 import com.ivy.legacy.Constants
 import com.ivy.legacy.IvyWalletPreview
 import com.ivy.legacy.rootScreen
 import com.ivy.legacy.utils.OpResult
 import com.ivy.legacy.utils.drawColoredShadow
+import com.ivy.legacy.utils.formatLocal
 import com.ivy.legacy.utils.thenIf
 import com.ivy.navigation.AttributionsScreen
 import com.ivy.navigation.ContributorsScreen
@@ -220,22 +222,6 @@ private fun BoxWithConstraintsScope.UI(
             // onboarding toolbar include paddingBottom 16.dp
         }
         item {
-            val context = LocalContext.current
-            GoogleDriveBackup(
-                state = googleDriveBackupState,
-                onUserSignedUp = onUserSignedUpForGoogleDrive,
-                onStartSigningUserIn = onUserStartSigningUpForGoogleDrive,
-                createBackupNow = createGoogleDriveBackup,
-                onUserWasUnableToSignup = {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.google_error_try_again),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                },
-            )
-        }
-        item {
             Spacer(Modifier.height(8.dp))
 
             Text(
@@ -283,6 +269,23 @@ private fun BoxWithConstraintsScope.UI(
             ) {
                 onBackupData()
             }
+
+            Spacer(Modifier.height(12.dp))
+
+            val context = LocalContext.current
+            GoogleDriveBackup(
+                state = googleDriveBackupState,
+                onUserSignedUp = onUserSignedUpForGoogleDrive,
+                onStartSigningUserIn = onUserStartSigningUpForGoogleDrive,
+                createBackupNow = createGoogleDriveBackup,
+                onUserWasUnableToSignup = {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.google_error_try_again),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+            )
 
             Spacer(Modifier.height(12.dp))
 
@@ -1172,6 +1175,103 @@ private fun SettingsDefaultButton(
         description = description
     ) {
         onClick()
+    }
+}
+
+@Composable
+fun GoogleDriveBackup(
+    state: GoogleDriveBackupState,
+    onUserSignedUp: () -> Unit,
+    onStartSigningUserIn: () -> Unit,
+    onUserWasUnableToSignup: (String?) -> Unit,
+    createBackupNow: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val googleSignupLaunch = createGoogleSignInActivityLauncher(
+        onSuccessfullySignedIn = { onUserSignedUp() },
+        onSignedInFailed = { ex -> onUserWasUnableToSignup(ex?.message) },
+        onCancel = { /*Do nothing*/ }
+    )
+    GoogleDriveBackupContent(
+        state = state,
+        onClick = {
+            when (state) {
+                is GoogleDriveBackupState.SignedUp -> {
+                    createBackupNow()
+                }
+
+                is GoogleDriveBackupState.SignedOut -> {
+                    onStartSigningUserIn()
+                    googleSignupLaunch.launch(state.signedUpIntent)
+                }
+
+                GoogleDriveBackupState.CheckingUserAuthState -> {}
+                GoogleDriveBackupState.TryingToSignUp -> {}
+            }
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun GoogleDriveBackupContent(
+    state: GoogleDriveBackupState,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val formattedLatestBackupDate: String? = remember(state) {
+        if (!state.backupIsEnabled) return@remember null
+        (state as? GoogleDriveBackupState.SignedUp)?.lastBackupDate?.formatLocal("MMMM d, hh:mm a")
+    }
+    SettingsButtonRow(
+        onClick = onClick
+    ) {
+        Spacer(Modifier.width(12.dp))
+        val iconPadding: Dp = 6.dp
+        IvyIconScaled(
+            icon = R.drawable.ic_vue_brands_drive,
+            tint = UI.colors.pureInverse,
+            iconScale = IconScale.M,
+            padding = iconPadding
+        )
+
+        Spacer(Modifier.width(8.dp))
+
+        Column(
+            Modifier
+                .weight(1f)
+                .padding(top = 20.dp, bottom = 20.dp, end = 8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+
+
+                Text(
+                    text = stringResource(id = R.string.google_drive_backup),
+                    style = UI.typo.b2.style(
+                        color = UI.colors.pureInverse,
+                        fontWeight = FontWeight.Bold,
+                    )
+                )
+                if (state.backupIsEnabled) {
+                    IvyIconScaled(
+                        icon = R.drawable.ic_done,
+                        tint = UI.colors.green,
+                        iconScale = IconScale.S,
+                        padding = iconPadding
+                    )
+                }
+            }
+            if (formattedLatestBackupDate != null) {
+                Text(
+                    modifier = Modifier.padding(end = 8.dp),
+                    text = "Last backup: $formattedLatestBackupDate",
+                    style = UI.typo.nB2.style(
+                        color = Gray,
+                        fontWeight = FontWeight.Normal
+                    ).copy(fontSize = 14.sp)
+                )
+            }
+        }
     }
 }
 

@@ -9,45 +9,29 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.tasks.Task
 import java.lang.Exception
 
 @Composable
-fun GoogleSignInActivityLauncher(
-    onResult: (GoogleSignInAccount) -> Unit,
-    onError: (Exception?) -> Unit,
+fun createGoogleSignInActivityLauncher(
+    onSuccessfullySignedIn: (GoogleSignInAccount) -> Unit,
+    onSignedInFailed: (Exception?) -> Unit,
     onCancel: () -> Unit,
-    content: @Composable (ManagedActivityResultLauncher<Intent, ActivityResult>) -> Unit
-) {
-    val googleSignInLauncher = rememberLauncherForActivityResult(
+): ManagedActivityResultLauncher<Intent, ActivityResult> {
+    return rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
         onResult = {
             if (it.resultCode == RESULT_OK) {
                 val intent = it.data
                 val task = GoogleSignIn.getSignedInAccountFromIntent(intent)
-                handleSignInResult(
-                    task = task,
-                    onResult = onResult,
-                    onError = onError
-                )
+                val taskResult = task.result
+                if (task.isSuccessful && taskResult != null) {
+                    onSuccessfullySignedIn(taskResult)
+                } else {
+                    onSignedInFailed(task.exception)
+                }
             } else {
                 onCancel()
             }
         }
     )
-    content(googleSignInLauncher)
-}
-
-private fun handleSignInResult(
-    task: Task<GoogleSignInAccount>,
-    onResult: (GoogleSignInAccount) -> Unit,
-    onError: (Exception) -> Unit
-) {
-    try {
-        val account = task.getResult(ApiException::class.java)
-        onResult(account)
-    } catch (e: ApiException) {
-        onError(e)
-    }
 }
