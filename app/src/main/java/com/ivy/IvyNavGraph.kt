@@ -26,6 +26,7 @@ import com.ivy.navigation.EditPlannedScreen
 import com.ivy.navigation.EditTransactionScreen
 import com.ivy.navigation.ExchangeRatesScreen
 import com.ivy.navigation.FeaturesScreen
+import com.ivy.navigation.GoogleDriveScreen
 import com.ivy.navigation.ImportScreen
 import com.ivy.navigation.LoanDetailsScreen
 import com.ivy.navigation.LoansScreen
@@ -49,6 +50,7 @@ import com.ivy.search.SearchScreen
 import com.ivy.settings.SettingsScreen
 import com.ivy.transaction.EditTransactionScreen
 import com.ivy.transactions.TransactionsScreen
+import com.ivy.drive.GoogleDriveScreen
 
 @ExperimentalFoundationApi
 @ExperimentalAnimationApi
@@ -81,5 +83,6 @@ fun BoxWithConstraintsScope.IvyNavGraph(screen: Screen?) {
         AttributionsScreen -> AttributionsScreenImpl()
         ContributorsScreen -> ContributorsScreenImpl()
         ReleasesScreen -> ReleasesScreenImpl()
+        GoogleDriveScreen -> GoogleDriveScreen()
     }
 }

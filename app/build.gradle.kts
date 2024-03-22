@@ -154,6 +154,7 @@ dependencies {
     implementation(projects.screenSettings)
     implementation(projects.screenTransaction)
     implementation(projects.screenTransactions)
+    implementation(projects.screenGoogleDrive)
     implementation(projects.tempLegacyCode)
     implementation(projects.tempOldDesign)
     implementation(projects.widgetAddTransaction)

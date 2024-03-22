@@ -55,6 +55,7 @@ import com.ivy.legacy.utils.thenIf
 import com.ivy.navigation.AttributionsScreen
 import com.ivy.navigation.ContributorsScreen
 import com.ivy.navigation.ExchangeRatesScreen
+import com.ivy.navigation.GoogleDriveScreen
 import com.ivy.navigation.ImportScreen
 import com.ivy.navigation.Navigation
 import com.ivy.navigation.ReleasesScreen
@@ -271,21 +272,13 @@ private fun BoxWithConstraintsScope.UI(
             }
 
             Spacer(Modifier.height(12.dp))
-
-            val context = LocalContext.current
-            GoogleDriveBackup(
-                state = googleDriveBackupState,
-                onUserSignedUp = onUserSignedUpForGoogleDrive,
-                onStartSigningUserIn = onUserStartSigningUpForGoogleDrive,
-                createBackupNow = createGoogleDriveBackup,
-                onUserWasUnableToSignup = {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.google_error_try_again),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                },
-            )
+            SettingsDefaultButton(
+                icon = R.drawable.ic_vue_brands_drive,
+                text = stringResource(R.string.google_drive_backup),
+                iconPadding = 6.dp
+            ) {
+                nav.navigateTo(GoogleDriveScreen)
+            }
 
             Spacer(Modifier.height(12.dp))
 
@@ -1175,103 +1168,6 @@ private fun SettingsDefaultButton(
         description = description
     ) {
         onClick()
-    }
-}
-
-@Composable
-fun GoogleDriveBackup(
-    state: GoogleDriveBackupState,
-    onUserSignedUp: () -> Unit,
-    onStartSigningUserIn: () -> Unit,
-    onUserWasUnableToSignup: (String?) -> Unit,
-    createBackupNow: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val googleSignupLaunch = createGoogleSignInActivityLauncher(
-        onSuccessfullySignedIn = { onUserSignedUp() },
-        onSignedInFailed = { ex -> onUserWasUnableToSignup(ex?.message) },
-        onCancel = { /*Do nothing*/ }
-    )
-    GoogleDriveBackupContent(
-        state = state,
-        onClick = {
-            when (state) {
-                is GoogleDriveBackupState.SignedUp -> {
-                    createBackupNow()
-                }
-
-                is GoogleDriveBackupState.SignedOut -> {
-                    onStartSigningUserIn()
-                    googleSignupLaunch.launch(state.signedUpIntent)
-                }
-
-                GoogleDriveBackupState.CheckingUserAuthState -> {}
-                GoogleDriveBackupState.TryingToSignUp -> {}
-            }
-        },
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun GoogleDriveBackupContent(
-    state: GoogleDriveBackupState,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val formattedLatestBackupDate: String? = remember(state) {
-        if (!state.backupIsEnabled) return@remember null
-        (state as? GoogleDriveBackupState.SignedUp)?.lastBackupDate?.formatLocal("MMMM d, hh:mm a")
-    }
-    SettingsButtonRow(
-        onClick = onClick
-    ) {
-        Spacer(Modifier.width(12.dp))
-        val iconPadding: Dp = 6.dp
-        IvyIconScaled(
-            icon = R.drawable.ic_vue_brands_drive,
-            tint = UI.colors.pureInverse,
-            iconScale = IconScale.M,
-            padding = iconPadding
-        )
-
-        Spacer(Modifier.width(8.dp))
-
-        Column(
-            Modifier
-                .weight(1f)
-                .padding(top = 20.dp, bottom = 20.dp, end = 8.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-
-
-                Text(
-                    text = stringResource(id = R.string.google_drive_backup),
-                    style = UI.typo.b2.style(
-                        color = UI.colors.pureInverse,
-                        fontWeight = FontWeight.Bold,
-                    )
-                )
-                if (state.backupIsEnabled) {
-                    IvyIconScaled(
-                        icon = R.drawable.ic_done,
-                        tint = UI.colors.green,
-                        iconScale = IconScale.S,
-                        padding = iconPadding
-                    )
-                }
-            }
-            if (formattedLatestBackupDate != null) {
-                Text(
-                    modifier = Modifier.padding(end = 8.dp),
-                    text = "Last backup: $formattedLatestBackupDate",
-                    style = UI.typo.nB2.style(
-                        color = Gray,
-                        fontWeight = FontWeight.Normal
-                    ).copy(fontSize = 14.sp)
-                )
-            }
-        }
     }
 }
 
